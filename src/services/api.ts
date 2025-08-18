@@ -57,6 +57,45 @@ export const apiService = {
     if (!backdropPath) return null;
     return `${IMAGE_BASE_URL}/${size}${backdropPath}`;
   },
+
+  // Film kategorilerini getir
+  getGenres: async () => {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/genre/movie/list?api_key=${API_KEY}&language=tr-TR`
+      );
+      return await response.json();
+    } catch (error) {
+      console.error('Kategoriler getirilemedi:', error);
+      throw error;
+    }
+  },
+
+  // Kategori bazlı filmleri getir
+  getMoviesByGenre: async (genreId: number, page: number = 1) => {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/discover/movie?api_key=${API_KEY}&language=tr-TR&with_genres=${genreId}&page=${page}&sort_by=popularity.desc`
+      );
+      return await response.json();
+    } catch (error) {
+      console.error('Kategori filmleri getirilemedi:', error);
+      throw error;
+    }
+  },
+
+  // Benzer filmleri getir
+  getSimilarMovies: async (movieId: number, page: number = 1) => {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/movie/${movieId}/similar?api_key=${API_KEY}&language=tr-TR&page=${page}`
+      );
+      return await response.json();
+    } catch (error) {
+      console.error('Benzer filmler getirilemedi:', error);
+      throw error;
+    }
+  },
 };
 
 export default apiService;

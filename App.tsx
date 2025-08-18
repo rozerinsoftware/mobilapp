@@ -10,6 +10,8 @@ import HomeScreen from './src/screens/HomeScreen';
 import SearchScreen from './src/screens/SearchScreen';
 import WatchlistScreen from './src/screens/WatchlistScreen';
 import MovieDetailScreen from './src/screens/MovieDetailScreen';
+import CategoriesScreen from './src/screens/CategoriesScreen';
+import GenreMoviesScreen from './src/screens/GenreMoviesScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -24,6 +26,8 @@ function TabNavigator() {
 
           if (route.name === 'Ana Sayfa') {
             iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Kategoriler') {
+            iconName = focused ? 'grid' : 'grid-outline';
           } else if (route.name === 'Arama') {
             iconName = focused ? 'search' : 'search-outline';
           } else if (route.name === 'İzleme Listem') {
@@ -39,6 +43,7 @@ function TabNavigator() {
       })}
     >
       <Tab.Screen name="Ana Sayfa" component={HomeScreen} />
+      <Tab.Screen name="Kategoriler" component={CategoriesScreen} />
       <Tab.Screen name="Arama" component={SearchScreen} />
       <Tab.Screen name="İzleme Listem" component={WatchlistScreen} />
     </Tab.Navigator>
@@ -57,6 +62,11 @@ export default function App() {
         <Stack.Screen 
           name="MovieDetail" 
           component={MovieDetailScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="GenreMovies" 
+          component={GenreMoviesScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
