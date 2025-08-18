@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,6 +30,7 @@ export default function HomeScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [watchlistStatus, setWatchlistStatus] = useState<{[key: number]: boolean}>({});
+  const fadeAnim = new Animated.Value(0);
 
   // Film verilerini çekme fonksiyonu
   const fetchMovies = async () => {
@@ -47,6 +49,13 @@ export default function HomeScreen({ navigation }: any) {
   useEffect(() => {
     fetchMovies();
     checkWatchlistStatus();
+    
+    // Fade animasyonu başlat
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
   }, []);
 
   // İzleme listesi durumunu kontrol et
@@ -153,8 +162,14 @@ export default function HomeScreen({ navigation }: any) {
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Filmler yükleniyor...</Text>
+        <View style={styles.loadingContent}>
+          <View style={styles.loadingIconContainer}>
+            <Ionicons name="film" size={48} color="#007AFF" />
+            <ActivityIndicator size="large" color="#007AFF" style={styles.loadingSpinner} />
+          </View>
+          <Text style={styles.loadingTitle}>Filmler Yükleniyor</Text>
+          <Text style={styles.loadingSubtitle}>En popüler filmleri getiriyoruz...</Text>
+        </View>
       </SafeAreaView>
     );
   }
@@ -166,18 +181,20 @@ export default function HomeScreen({ navigation }: any) {
         <Text style={styles.headerSubtitle}>Popüler filmleri keşfedin</Text>
       </View>
       
-      <FlatList
-        data={movies}
-        renderItem={renderMovieCard}
-        keyExtractor={(item) => item.id.toString()}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.listContainer}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        showsVerticalScrollIndicator={false}
-      />
+      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+        <FlatList
+          data={movies}
+          renderItem={renderMovieCard}
+          keyExtractor={(item) => item.id.toString()}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={styles.listContainer}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -193,10 +210,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#f8f9fa',
   },
-  loadingText: {
-    marginTop: 10,
+  loadingContent: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  loadingIconContainer: {
+    position: 'relative',
+    marginBottom: 20,
+  },
+  loadingSpinner: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  loadingTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  loadingSubtitle: {
     fontSize: 16,
     color: '#666',
+    textAlign: 'center',
+    lineHeight: 22,
   },
   header: {
     padding: 20,
