@@ -127,7 +127,11 @@ export default function MovieDetailScreen({ route, navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        showsVerticalScrollIndicator={true}
+        bounces={true}
+        style={{ flex: 1 }}
+      >
         {/* Backdrop Image */}
         <View style={styles.backdropContainer}>
           <Image
@@ -206,7 +210,7 @@ export default function MovieDetailScreen({ route, navigation }: any) {
         {movie.credits?.cast && movie.credits.cast.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Oyuncular</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                         <ScrollView horizontal showsHorizontalScrollIndicator={true}>
               {movie.credits.cast.slice(0, 10).map((actor) => (
                 <View key={actor.id} style={styles.actorCard}>
                   <Image

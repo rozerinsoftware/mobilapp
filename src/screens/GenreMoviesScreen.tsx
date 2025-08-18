@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,15 +27,18 @@ interface Movie {
 export default function GenreMoviesScreen({ route, navigation }: any) {
   const { genreId, genreName } = route.params;
   const [movies, setMovies] = useState<Movie[]>([]);
+  const [filteredMovies, setFilteredMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [watchlistStatus, setWatchlistStatus] = useState<{[key: number]: boolean}>({});
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Kategori filmlerini çek
   const fetchGenreMovies = async () => {
     try {
       const data = await apiService.getMoviesByGenre(genreId, 1);
       setMovies(data.results);
+      setFilteredMovies(data.results);
     } catch (error) {
       console.error('Kategori filmleri çekilemedi:', error);
     } finally {
@@ -92,6 +96,19 @@ export default function GenreMoviesScreen({ route, navigation }: any) {
       checkWatchlistStatus();
     } catch (error) {
       console.error('İzleme listesi güncellenemedi:', error);
+    }
+  };
+
+  // Arama fonksiyonu
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    if (text.trim() === '') {
+      setFilteredMovies(movies);
+    } else {
+      const filtered = movies.filter(movie =>
+        movie.title.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredMovies(filtered);
     }
   };
 
@@ -157,7 +174,7 @@ export default function GenreMoviesScreen({ route, navigation }: any) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -169,8 +186,21 @@ export default function GenreMoviesScreen({ route, navigation }: any) {
         <View style={styles.placeholder} />
       </View>
       
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBox}>
+          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={`${genreName} filmlerinde ara...`}
+            placeholderTextColor="#999"
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+        </View>
+      </View>
+
       <FlatList
-        data={movies}
+        data={filteredMovies}
         renderItem={renderMovieCard}
         keyExtractor={(item) => item.id.toString()}
         numColumns={2}
@@ -179,9 +209,10 @@ export default function GenreMoviesScreen({ route, navigation }: any) {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
+        style={{ flex: 1 }}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -189,6 +220,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+    height: '100%',
   },
   loadingContainer: {
     flex: 1,
@@ -221,6 +253,29 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 40,
+  },
+
+  searchContainer: {
+    padding: 15,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#1a1a1a',
   },
   listContainer: {
     padding: 10,

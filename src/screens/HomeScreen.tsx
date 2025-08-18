@@ -36,6 +36,8 @@ export default function HomeScreen({ navigation }: any) {
   const fetchMovies = async () => {
     try {
       const data = await apiService.getPopularMovies(1);
+      console.log('API Response:', data); // Debug için
+      console.log('First movie poster:', data.results[0]?.poster_path); // Debug için
       setMovies(data.results);
     } catch (error) {
       console.error('Film verileri çekilemedi:', error);
@@ -127,6 +129,8 @@ export default function HomeScreen({ navigation }: any) {
         }}
         style={styles.poster}
         resizeMode="cover"
+        onError={(error) => console.log('Image error:', error.nativeEvent)} // Debug için
+        onLoad={() => console.log('Image loaded for:', item.title)} // Debug için
       />
       
       {/* İzleme listesi butonu */}
