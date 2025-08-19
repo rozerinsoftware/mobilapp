@@ -113,13 +113,13 @@ export const apiService = {
 
   // Film poster URL'i oluştur
   getPosterUrl: (posterPath: string, size: 'w200' | 'w500' | 'original' = 'w500') => {
-    if (!posterPath) return null;
+    if (!posterPath) return undefined;
     return `${IMAGE_BASE_URL}/${size}${posterPath}`;
   },
 
   // Backdrop URL'i oluştur
   getBackdropUrl: (backdropPath: string, size: 'w300' | 'w780' | 'original' = 'w780') => {
-    if (!backdropPath) return null;
+    if (!backdropPath) return undefined;
     return `${IMAGE_BASE_URL}/${size}${backdropPath}`;
   },
 

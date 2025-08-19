@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   RefreshControl,
   TextInput,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,8 +34,7 @@ export default function GenreMoviesScreen({ route, navigation }: any) {
   const [watchlistStatus, setWatchlistStatus] = useState<{[key: number]: boolean}>({});
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Web kontrolü
-  const isWeb = Platform.OS === 'web';
+
 
   // Kategori filmlerini çek
   const fetchGenreMovies = async () => {
@@ -207,48 +205,20 @@ export default function GenreMoviesScreen({ route, navigation }: any) {
         </View>
       </View>
 
-      {/* Movie List - Web için ScrollView, Mobile için FlatList */}
-      {isWeb ? (
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={true}
-          scrollEnabled={true}
-          bounces={true}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        >
-          <View style={styles.movieGrid}>
-            {filteredMovies.map((movie, index) => renderMovieCard(movie, index))}
-          </View>
-        </ScrollView>
-      ) : (
-        <FlatList
-          data={filteredMovies}
-          renderItem={({ item }) => renderMovieCard(item)}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={2}
-          columnWrapperStyle={styles.row}
-          contentContainerStyle={styles.listContainer}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          showsVerticalScrollIndicator={true}
-          scrollEnabled={true}
-          bounces={true}
-          style={styles.flatList}
-          removeClippedSubviews={false}
-          maxToRenderPerBatch={20}
-          windowSize={21}
-          initialNumToRender={10}
-          getItemLayout={(data, index) => ({
-            length: 280,
-            offset: 280 * Math.floor(index / 2),
-            index,
-          })}
-        />
-      )}
+      {/* Movie List */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+        scrollEnabled={true}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <View style={styles.movieGrid}>
+          {filteredMovies.map((movie, index) => renderMovieCard(movie, index))}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -312,11 +282,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1a1a1a',
   },
+  listWrapper: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     padding: 10,
+    paddingBottom: 50,
   },
   movieGrid: {
     flexDirection: 'row',

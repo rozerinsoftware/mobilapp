@@ -17,13 +17,15 @@ import apiService from '../services/api';
 // Film detay tipi
 interface MovieDetail {
   id: number;
-  title: string;
+  title?: string;
+  name?: string;
   overview: string;
   poster_path: string;
   backdrop_path: string;
   vote_average: number;
-  release_date: string;
-  runtime: number;
+  release_date?: string;
+  first_air_date?: string;
+  runtime?: number;
   genres: Array<{ id: number; name: string }>;
   credits: {
     cast: Array<{
@@ -85,10 +87,10 @@ export default function MovieDetailScreen({ route, navigation }: any) {
         // Listeye ekle
         const movieItem = {
           id: movie.id,
-          title: movie.title,
+          title: movie.title || movie.name, // TV dizileri için name kullan
           poster_path: movie.poster_path,
           vote_average: movie.vote_average,
-          release_date: movie.release_date,
+          release_date: movie.release_date || movie.first_air_date, // TV dizileri için first_air_date kullan
           media_type: mediaType,
         };
         watchlistArray.push(movieItem);
@@ -140,7 +142,7 @@ export default function MovieDetailScreen({ route, navigation }: any) {
         <View style={styles.backdropContainer}>
           <Image
             source={{
-              uri: apiService.getBackdropUrl(movie.backdrop_path, 'w780'),
+              uri: apiService.getBackdropUrl(movie.backdrop_path, 'w780') || 'https://via.placeholder.com/800x450?text=No+Image',
             }}
             style={styles.backdrop}
             resizeMode="cover"
@@ -173,7 +175,7 @@ export default function MovieDetailScreen({ route, navigation }: any) {
           <View style={styles.posterContainer}>
             <Image
               source={{
-                uri: apiService.getPosterUrl(movie.poster_path, 'w500'),
+                uri: apiService.getPosterUrl(movie.poster_path, 'w500') || 'https://via.placeholder.com/300x450?text=No+Image',
               }}
               style={styles.poster}
               resizeMode="cover"
@@ -181,13 +183,13 @@ export default function MovieDetailScreen({ route, navigation }: any) {
           </View>
 
           <View style={styles.infoContainer}>
-            <Text style={styles.title}>{movie.title}</Text>
+            <Text style={styles.title}>{movie.title || movie.name}</Text>
             
             <View style={styles.ratingContainer}>
               <Ionicons name="star" size={16} color="#FFD700" />
               <Text style={styles.rating}>{movie.vote_average.toFixed(1)}</Text>
               <Text style={styles.year}>
-                • {new Date(movie.release_date).getFullYear()}
+                • {new Date(movie.release_date || movie.first_air_date || '').getFullYear()}
               </Text>
               {movie.runtime && (
                 <Text style={styles.runtime}>• {movie.runtime} dk</Text>
@@ -220,7 +222,7 @@ export default function MovieDetailScreen({ route, navigation }: any) {
                   <Image
                     source={{
                       uri: actor.profile_path
-                        ? apiService.getPosterUrl(actor.profile_path, 'w200')
+                        ? (apiService.getPosterUrl(actor.profile_path, 'w200') || 'https://via.placeholder.com/100x150?text=No+Image')
                         : 'https://via.placeholder.com/100x150?text=No+Image'
                     }}
                     style={styles.actorImage}

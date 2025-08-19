@@ -71,42 +71,6 @@ export default function App() {
         />
       </Stack.Navigator>
       <StatusBar style="auto" />
-      
-      {/* Web için global CSS */}
-      <style>
-        {`
-          /* Web scroll bar stilleri */
-          ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-          }
-          
-          ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-          }
-          
-          ::-webkit-scrollbar-thumb {
-            background: #007AFF;
-            border-radius: 4px;
-          }
-          
-          ::-webkit-scrollbar-thumb:hover {
-            background: #0056CC;
-          }
-          
-          /* FlatList ve ScrollView için scroll bar görünürlüğü */
-          .scroll-view, .flat-list {
-            scrollbar-width: auto !important;
-            -webkit-overflow-scrolling: touch !important;
-          }
-          
-          /* Tüm scrollable elementler için */
-          * {
-            scrollbar-width: auto !important;
-          }
-        `}
-      </style>
     </NavigationContainer>
   );
 }

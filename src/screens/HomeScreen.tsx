@@ -139,18 +139,28 @@ export default function HomeScreen({ navigation }: any) {
     const releaseDate = item.release_date || item.first_air_date;
     const mediaType = item.media_type || (activeTab === 'movies' ? 'movie' : 'tv');
 
+    const handleCardPress = () => {
+      console.log('Kart tıklandı:', item.id, mediaType, title); // Debug için
+      try {
+        navigation.navigate('MovieDetail', { 
+          movieId: item.id, 
+          mediaType: mediaType 
+        });
+      } catch (error) {
+        console.error('Navigation error:', error);
+      }
+    };
+
     return (
-      <Animated.View style={[styles.card, { opacity: fadeAnim }]}>
+      <View style={styles.card}>
         <TouchableOpacity
-          onPress={() => navigation.navigate('MovieDetail', { 
-            movieId: item.id, 
-            mediaType: mediaType 
-          })}
+          onPress={handleCardPress}
           style={styles.cardTouchable}
+          activeOpacity={0.8}
         >
           <Image
             source={{
-              uri: apiService.getPosterUrl(item.poster_path, 'w500'),
+              uri: apiService.getPosterUrl(item.poster_path, 'w500') || 'https://via.placeholder.com/300x450?text=No+Image',
             }}
             style={styles.poster}
             resizeMode="cover"
@@ -180,7 +190,10 @@ export default function HomeScreen({ navigation }: any) {
 
           <TouchableOpacity
             style={styles.watchlistButton}
-            onPress={() => toggleWatchlist(item)}
+            onPress={(e) => {
+              e.stopPropagation(); // Ana kartın tıklamasını engelle
+              toggleWatchlist(item);
+            }}
           >
             <Ionicons
               name={watchlistStatus[item.id] ? "heart" : "heart-outline"}
@@ -189,7 +202,7 @@ export default function HomeScreen({ navigation }: any) {
             />
           </TouchableOpacity>
         </TouchableOpacity>
-      </Animated.View>
+      </View>
     );
   };
 
@@ -339,10 +352,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    overflow: 'hidden',
   },
   cardTouchable: {
+    flex: 1,
     borderRadius: 12,
-    overflow: 'hidden',
   },
   poster: {
     width: '100%',
