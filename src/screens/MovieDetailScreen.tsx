@@ -131,12 +131,16 @@ export default function MovieDetailScreen({ route, navigation }: any) {
         showsVerticalScrollIndicator={true}
         bounces={true}
         style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 50 }}
+        scrollEnabled={true}
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Backdrop Image */}
         <View style={styles.backdropContainer}>
           <Image
             source={{
-              uri: `https://image.tmdb.org/t/p/w780${movie.backdrop_path}`,
+              uri: apiService.getBackdropUrl(movie.backdrop_path, 'w780'),
             }}
             style={styles.backdrop}
             resizeMode="cover"
@@ -169,7 +173,7 @@ export default function MovieDetailScreen({ route, navigation }: any) {
           <View style={styles.posterContainer}>
             <Image
               source={{
-                uri: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+                uri: apiService.getPosterUrl(movie.poster_path, 'w500'),
               }}
               style={styles.poster}
               resizeMode="cover"
@@ -210,13 +214,13 @@ export default function MovieDetailScreen({ route, navigation }: any) {
         {movie.credits?.cast && movie.credits.cast.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Oyuncular</Text>
-                         <ScrollView horizontal showsHorizontalScrollIndicator={true}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={true}>
               {movie.credits.cast.slice(0, 10).map((actor) => (
                 <View key={actor.id} style={styles.actorCard}>
                   <Image
                     source={{
                       uri: actor.profile_path
-                        ? `https://image.tmdb.org/t/p/w200${actor.profile_path}`
+                        ? apiService.getPosterUrl(actor.profile_path, 'w200')
                         : 'https://via.placeholder.com/100x150?text=No+Image'
                     }}
                     style={styles.actorImage}
@@ -233,6 +237,9 @@ export default function MovieDetailScreen({ route, navigation }: any) {
             </ScrollView>
           </View>
         )}
+
+        {/* Extra padding for better scrolling */}
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );

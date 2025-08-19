@@ -82,7 +82,7 @@ export default function WatchlistScreen({ navigation }: any) {
     );
   };
 
-  // Film kartı
+  // Film/Dizi kartı
   const renderWatchlistItem = ({ item }: { item: WatchlistItem }) => (
     <TouchableOpacity
       style={styles.movieCard}
@@ -165,7 +165,13 @@ export default function WatchlistScreen({ navigation }: any) {
           numColumns={2}
           columnWrapperStyle={styles.row}
           contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={true}
+          scrollEnabled={true}
+          bounces={true}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          initialNumToRender={6}
         />
       )}
     </SafeAreaView>

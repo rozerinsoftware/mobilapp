@@ -4,11 +4,13 @@ import {
   Text,
   StyleSheet,
   FlatList,
+  ScrollView,
   Image,
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
   TextInput,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,6 +34,9 @@ export default function GenreMoviesScreen({ route, navigation }: any) {
   const [refreshing, setRefreshing] = useState(false);
   const [watchlistStatus, setWatchlistStatus] = useState<{[key: number]: boolean}>({});
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Web kontrolü
+  const isWeb = Platform.OS === 'web';
 
   // Kategori filmlerini çek
   const fetchGenreMovies = async () => {
@@ -119,8 +124,9 @@ export default function GenreMoviesScreen({ route, navigation }: any) {
   };
 
   // Film kartı
-  const renderMovieCard = ({ item }: { item: Movie }) => (
+  const renderMovieCard = (item: Movie, index?: number) => (
     <TouchableOpacity
+      key={item.id}
       style={styles.movieCard}
       onPress={() => navigation.navigate('MovieDetail', { movieId: item.id })}
     >
@@ -174,7 +180,8 @@ export default function GenreMoviesScreen({ route, navigation }: any) {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -186,6 +193,7 @@ export default function GenreMoviesScreen({ route, navigation }: any) {
         <View style={styles.placeholder} />
       </View>
       
+      {/* Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBox}>
           <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
@@ -199,20 +207,49 @@ export default function GenreMoviesScreen({ route, navigation }: any) {
         </View>
       </View>
 
-      <FlatList
-        data={filteredMovies}
-        renderItem={renderMovieCard}
-        keyExtractor={(item) => item.id.toString()}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.listContainer}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        showsVerticalScrollIndicator={true}
-        style={{ flex: 1 }}
-      />
-    </View>
+      {/* Movie List - Web için ScrollView, Mobile için FlatList */}
+      {isWeb ? (
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={true}
+          scrollEnabled={true}
+          bounces={true}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          <View style={styles.movieGrid}>
+            {filteredMovies.map((movie, index) => renderMovieCard(movie, index))}
+          </View>
+        </ScrollView>
+      ) : (
+        <FlatList
+          data={filteredMovies}
+          renderItem={({ item }) => renderMovieCard(item)}
+          keyExtractor={(item) => item.id.toString()}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={styles.listContainer}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          showsVerticalScrollIndicator={true}
+          scrollEnabled={true}
+          bounces={true}
+          style={styles.flatList}
+          removeClippedSubviews={false}
+          maxToRenderPerBatch={20}
+          windowSize={21}
+          initialNumToRender={10}
+          getItemLayout={(data, index) => ({
+            length: 280,
+            offset: 280 * Math.floor(index / 2),
+            index,
+          })}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
@@ -220,7 +257,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
-    height: '100%',
   },
   loadingContainer: {
     flex: 1,
@@ -254,7 +290,6 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 40,
   },
-
   searchContainer: {
     padding: 15,
     backgroundColor: '#fff',
@@ -276,6 +311,20 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#1a1a1a',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 10,
+  },
+  movieGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  flatList: {
+    flex: 1,
   },
   listContainer: {
     padding: 10,

@@ -16,17 +16,22 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiService from '../services/api';
 
-// Film tipi tanımı
-interface Movie {
+// Film/Dizi tipi tanımı
+interface MediaItem {
   id: number;
-  title: string;
+  title?: string;
+  name?: string;
   poster_path: string;
   vote_average: number;
-  release_date: string;
+  release_date?: string;
+  first_air_date?: string;
+  media_type?: 'movie' | 'tv';
 }
 
 export default function HomeScreen({ navigation }: any) {
-  const [movies, setMovies] = useState<Movie[]>([]);
+  const [activeTab, setActiveTab] = useState<'movies' | 'tv'>('movies');
+  const [movies, setMovies] = useState<MediaItem[]>([]);
+  const [tvShows, setTvShows] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [watchlistStatus, setWatchlistStatus] = useState<{[key: number]: boolean}>({});
@@ -35,21 +40,34 @@ export default function HomeScreen({ navigation }: any) {
   // Film verilerini çekme fonksiyonu
   const fetchMovies = async () => {
     try {
-      const data = await apiService.getPopularMovies(1);
-      console.log('API Response:', data); // Debug için
-      console.log('First movie poster:', data.results[0]?.poster_path); // Debug için
+      const data = await apiService.getRandomMovies(1);
       setMovies(data.results);
     } catch (error) {
       console.error('Film verileri çekilemedi:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
     }
   };
 
-  // Sayfa yüklendiğinde filmleri çek
+  // TV dizilerini çekme fonksiyonu
+  const fetchTVShows = async () => {
+    try {
+      const data = await apiService.getRandomTVShows(1);
+      setTvShows(data.results);
+    } catch (error) {
+      console.error('TV dizileri çekilemedi:', error);
+    }
+  };
+
+  // Tüm verileri çek
+  const fetchAllData = async () => {
+    setLoading(true);
+    await Promise.all([fetchMovies(), fetchTVShows()]);
+    setLoading(false);
+    setRefreshing(false);
+  };
+
+  // Sayfa yüklendiğinde verileri çek
   useEffect(() => {
-    fetchMovies();
+    fetchAllData();
     checkWatchlistStatus();
     
     // Fade animasyonu başlat
@@ -78,27 +96,27 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   // İzleme listesine ekle/çıkar
-  const toggleWatchlist = async (movie: Movie) => {
+  const toggleWatchlist = async (item: MediaItem) => {
     try {
       const watchlist = await AsyncStorage.getItem('watchlist');
       let watchlistArray = watchlist ? JSON.parse(watchlist) : [];
 
-      if (watchlistStatus[movie.id]) {
+      if (watchlistStatus[item.id]) {
         // Listeden çıkar
-        watchlistArray = watchlistArray.filter((item: any) => item.id !== movie.id);
-        Alert.alert('Başarılı', 'Film izleme listenizden çıkarıldı');
+        watchlistArray = watchlistArray.filter((listItem: any) => listItem.id !== item.id);
+        Alert.alert('Başarılı', 'İçerik izleme listenizden çıkarıldı');
       } else {
         // Listeye ekle
-        const movieItem = {
-          id: movie.id,
-          title: movie.title,
-          poster_path: movie.poster_path,
-          vote_average: movie.vote_average,
-          release_date: movie.release_date,
-          media_type: 'movie',
+        const mediaItem = {
+          id: item.id,
+          title: item.title || item.name,
+          poster_path: item.poster_path,
+          vote_average: item.vote_average,
+          release_date: item.release_date || item.first_air_date,
+          media_type: item.media_type || (activeTab === 'movies' ? 'movie' : 'tv'),
         };
-        watchlistArray.push(movieItem);
-        Alert.alert('Başarılı', 'Film izleme listenize eklendi');
+        watchlistArray.push(mediaItem);
+        Alert.alert('Başarılı', 'İçerik izleme listenize eklendi');
       }
 
       await AsyncStorage.setItem('watchlist', JSON.stringify(watchlistArray));
@@ -112,93 +130,134 @@ export default function HomeScreen({ navigation }: any) {
   // Yenileme fonksiyonu
   const onRefresh = () => {
     setRefreshing(true);
-    fetchMovies();
+    fetchAllData();
   };
 
-  // Film kartı bileşeni
-  const renderMovieCard = ({ item }: { item: Movie }) => (
-    <TouchableOpacity
-      style={styles.movieCard}
-      onPress={() => navigation.navigate('MovieDetail', { movieId: item.id })}
-    >
-      <Image
-        source={{
-          uri: item.poster_path 
-            ? apiService.getPosterUrl(item.poster_path, 'w500')
-            : 'https://via.placeholder.com/300x450?text=No+Image'
-        }}
-        style={styles.poster}
-        resizeMode="cover"
-        onError={(error) => console.log('Image error:', error.nativeEvent)} // Debug için
-        onLoad={() => console.log('Image loaded for:', item.title)} // Debug için
-      />
-      
-      {/* İzleme listesi butonu */}
-      <TouchableOpacity
-        style={styles.watchlistButton}
-        onPress={(e) => {
-          e.stopPropagation();
-          toggleWatchlist(item);
-        }}
-      >
-        <Ionicons
-          name={watchlistStatus[item.id] ? "heart" : "heart-outline"}
-          size={20}
-          color={watchlistStatus[item.id] ? "#FF3B30" : "#fff"}
-        />
-      </TouchableOpacity>
+  // Film/Dizi kartı bileşeni
+  const renderMediaCard = ({ item }: { item: MediaItem }) => {
+    const title = item.title || item.name || 'Bilinmeyen Başlık';
+    const releaseDate = item.release_date || item.first_air_date;
+    const mediaType = item.media_type || (activeTab === 'movies' ? 'movie' : 'tv');
 
-      <View style={styles.movieInfo}>
-        <Text style={styles.movieTitle} numberOfLines={2}>
-          {item.title}
-        </Text>
-        <View style={styles.ratingContainer}>
-          <Ionicons name="star" size={16} color="#FFD700" />
-          <Text style={styles.rating}>{item.vote_average.toFixed(1)}</Text>
-        </View>
-        <Text style={styles.releaseDate}>
-          {new Date(item.release_date).getFullYear()}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
+    return (
+      <Animated.View style={[styles.card, { opacity: fadeAnim }]}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('MovieDetail', { 
+            movieId: item.id, 
+            mediaType: mediaType 
+          })}
+          style={styles.cardTouchable}
+        >
+          <Image
+            source={{
+              uri: apiService.getPosterUrl(item.poster_path, 'w500'),
+            }}
+            style={styles.poster}
+            resizeMode="cover"
+          />
+          
+          <View style={styles.cardContent}>
+            <Text style={styles.title} numberOfLines={2}>
+              {title}
+            </Text>
+            
+            <View style={styles.ratingContainer}>
+              <Ionicons name="star" size={14} color="#FFD700" />
+              <Text style={styles.rating}>{item.vote_average.toFixed(1)}</Text>
+              {releaseDate && (
+                <Text style={styles.year}>
+                  • {new Date(releaseDate).getFullYear()}
+                </Text>
+              )}
+            </View>
+
+            <View style={styles.mediaTypeContainer}>
+              <Text style={styles.mediaType}>
+                {mediaType === 'movie' ? '🎬 Film' : '📺 Dizi'}
+              </Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.watchlistButton}
+            onPress={() => toggleWatchlist(item)}
+          >
+            <Ionicons
+              name={watchlistStatus[item.id] ? "heart" : "heart-outline"}
+              size={20}
+              color={watchlistStatus[item.id] ? "#FF3B30" : "#666"}
+            />
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
+  // Sekme değiştirme fonksiyonu
+  const handleTabChange = (tab: 'movies' | 'tv') => {
+    setActiveTab(tab);
+  };
 
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <View style={styles.loadingContent}>
-          <View style={styles.loadingIconContainer}>
-            <Ionicons name="film" size={48} color="#007AFF" />
-            <ActivityIndicator size="large" color="#007AFF" style={styles.loadingSpinner} />
-          </View>
-          <Text style={styles.loadingTitle}>Filmler Yükleniyor</Text>
-          <Text style={styles.loadingSubtitle}>En popüler filmleri getiriyoruz...</Text>
-        </View>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>İçerikler yükleniyor...</Text>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>🎬 Film Keşfi</Text>
-        <Text style={styles.headerSubtitle}>Popüler filmleri keşfedin</Text>
+        <Text style={styles.headerTitle}>Film & Dizi Keşfi</Text>
       </View>
-      
-      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
-        <FlatList
-          data={movies}
-          renderItem={renderMovieCard}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={2}
-          columnWrapperStyle={styles.row}
-          contentContainerStyle={styles.listContainer}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          showsVerticalScrollIndicator={false}
-        />
-      </Animated.View>
+
+      {/* Tab Buttons */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'movies' && styles.activeTabButton]}
+          onPress={() => handleTabChange('movies')}
+        >
+          <Ionicons 
+            name="film" 
+            size={20} 
+            color={activeTab === 'movies' ? '#007AFF' : '#666'} 
+          />
+          <Text style={[styles.tabText, activeTab === 'movies' && styles.activeTabText]}>
+            Filmler
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'tv' && styles.activeTabButton]}
+          onPress={() => handleTabChange('tv')}
+        >
+          <Ionicons 
+            name="tv" 
+            size={20} 
+            color={activeTab === 'tv' ? '#007AFF' : '#666'} 
+          />
+          <Text style={[styles.tabText, activeTab === 'tv' && styles.activeTabText]}>
+            Diziler
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Content */}
+      <FlatList
+        data={activeTab === 'movies' ? movies : tvShows}
+        renderItem={renderMediaCard}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={2}
+        showsVerticalScrollIndicator={true}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        contentContainerStyle={styles.listContainer}
+        columnWrapperStyle={styles.row}
+      />
     </SafeAreaView>
   );
 }
@@ -214,47 +273,52 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#f8f9fa',
   },
-  loadingContent: {
-    alignItems: 'center',
-    padding: 40,
-  },
-  loadingIconContainer: {
-    position: 'relative',
-    marginBottom: 20,
-  },
-  loadingSpinner: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-  },
-  loadingTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  loadingSubtitle: {
+  loadingText: {
+    marginTop: 10,
     fontSize: 16,
     color: '#666',
-    textAlign: 'center',
-    lineHeight: 22,
   },
   header: {
     padding: 20,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    borderBottomColor: '#e0e0e0',
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#1a1a1a',
-    marginBottom: 5,
+    textAlign: 'center',
   },
-  headerSubtitle: {
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  tabButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    marginHorizontal: 5,
+    borderRadius: 8,
+    backgroundColor: '#f8f9fa',
+  },
+  activeTabButton: {
+    backgroundColor: '#e3f2fd',
+  },
+  tabText: {
+    marginLeft: 8,
     fontSize: 16,
+    fontWeight: '500',
     color: '#666',
+  },
+  activeTabText: {
+    color: '#007AFF',
   },
   listContainer: {
     padding: 10,
@@ -262,11 +326,11 @@ const styles = StyleSheet.create({
   row: {
     justifyContent: 'space-between',
   },
-  movieCard: {
+  card: {
+    width: '48%',
     backgroundColor: '#fff',
     borderRadius: 12,
     marginBottom: 15,
-    width: '48%',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -275,28 +339,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    position: 'relative',
+  },
+  cardTouchable: {
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   poster: {
     width: '100%',
     height: 200,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
   },
-  movieInfo: {
+  cardContent: {
     padding: 12,
   },
-  movieTitle: {
+  title: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: '#1a1a1a',
-    marginBottom: 8,
+    marginBottom: 6,
     lineHeight: 18,
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   rating: {
     marginLeft: 4,
@@ -304,17 +369,25 @@ const styles = StyleSheet.create({
     color: '#666',
     fontWeight: '500',
   },
-  releaseDate: {
+  year: {
+    marginLeft: 6,
     fontSize: 12,
-    color: '#999',
+    color: '#666',
+  },
+  mediaTypeContainer: {
+    marginTop: 4,
+  },
+  mediaType: {
+    fontSize: 11,
+    color: '#007AFF',
+    fontWeight: '500',
   },
   watchlistButton: {
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 15,
     padding: 6,
-    zIndex: 1,
   },
 });

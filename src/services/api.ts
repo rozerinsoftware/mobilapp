@@ -20,6 +20,32 @@ export const apiService = {
     }
   },
 
+  // Random filmleri getir (trending + popular karışımı)
+  getRandomMovies: async (page: number = 1) => {
+    try {
+      // Hem trending hem de popular filmleri al
+      const [trendingResponse, popularResponse] = await Promise.all([
+        fetch(`${BASE_URL}/trending/movie/week?api_key=${API_KEY}&language=tr-TR&page=${page}`),
+        fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&language=tr-TR&page=${page}`)
+      ]);
+      
+      const trendingData = await trendingResponse.json();
+      const popularData = await popularResponse.json();
+      
+      // İki listeyi karıştır
+      const combinedResults = [...trendingData.results, ...popularData.results];
+      const shuffledResults = combinedResults.sort(() => Math.random() - 0.5);
+      
+      return {
+        ...trendingData,
+        results: shuffledResults.slice(0, 20) // İlk 20 filmi al
+      };
+    } catch (error) {
+      console.error('Random filmler getirilemedi:', error);
+      throw error;
+    }
+  },
+
   // Film arama
   searchMovies: async (query: string, page: number = 1) => {
     try {
@@ -29,6 +55,45 @@ export const apiService = {
       return await response.json();
     } catch (error) {
       console.error('Film arama hatası:', error);
+      throw error;
+    }
+  },
+
+  // TV dizilerini getir
+  getPopularTVShows: async (page: number = 1) => {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/tv/popular?api_key=${API_KEY}&language=tr-TR&page=${page}`
+      );
+      return await response.json();
+    } catch (error) {
+      console.error('TV dizileri getirilemedi:', error);
+      throw error;
+    }
+  },
+
+  // Random TV dizileri getir
+  getRandomTVShows: async (page: number = 1) => {
+    try {
+      // Hem trending hem de popular TV dizilerini al
+      const [trendingResponse, popularResponse] = await Promise.all([
+        fetch(`${BASE_URL}/trending/tv/week?api_key=${API_KEY}&language=tr-TR&page=${page}`),
+        fetch(`${BASE_URL}/tv/popular?api_key=${API_KEY}&language=tr-TR&page=${page}`)
+      ]);
+      
+      const trendingData = await trendingResponse.json();
+      const popularData = await popularResponse.json();
+      
+      // İki listeyi karıştır
+      const combinedResults = [...trendingData.results, ...popularData.results];
+      const shuffledResults = combinedResults.sort(() => Math.random() - 0.5);
+      
+      return {
+        ...trendingData,
+        results: shuffledResults.slice(0, 20) // İlk 20 diziyi al
+      };
+    } catch (error) {
+      console.error('Random TV dizileri getirilemedi:', error);
       throw error;
     }
   },

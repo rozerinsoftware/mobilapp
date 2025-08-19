@@ -97,7 +97,13 @@ export default function CategoriesScreen({ navigation }: any) {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
+        scrollEnabled={true}
+        bounces={true}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        initialNumToRender={8}
       />
     </SafeAreaView>
   );

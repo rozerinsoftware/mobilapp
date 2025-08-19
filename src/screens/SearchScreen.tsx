@@ -163,7 +163,13 @@ export default function SearchScreen({ navigation }: any) {
         renderItem={renderSearchResult}
         keyExtractor={(item) => `${item.media_type}-${item.id}`}
         contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
+        scrollEnabled={true}
+        bounces={true}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        initialNumToRender={8}
       />
     </SafeAreaView>
   );
